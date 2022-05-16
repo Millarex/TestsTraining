@@ -12,66 +12,68 @@ namespace SomeClass.Tests
         private Item _item;
         private User _user;
         private Order _order;
+        Mock<IStock> _stockServiceStub;
+        Mock<IEmail> _emailServiceMock;
+        Mock<IBank> _bankServiceStub;
+        Mock<IOrders> _ordersServiceStub;
+        Mock<IPrice> _priceServiceStub;
         [SetUp]
         public void Setup()
         {
             _item = new Item() { Id = 0, Name = "test", Price = 10, Description = "alal" };
             _user = new User() { Name = "Alex", Adress = "some adress", Email = "someemail@mail.com" };
             _order = new Order();
+            _stockServiceStub = new Mock<IStock>();
+            _emailServiceMock = new Mock<IEmail>();
+            _bankServiceStub = new Mock<IBank>();
+            _ordersServiceStub = new Mock<IOrders>();
+            _priceServiceStub = new Mock<IPrice>();
+        }
+        private Shop getSut()
+        {
+            return new Shop(_stockServiceStub.Object, _emailServiceMock.Object,
+                _bankServiceStub.Object, _priceServiceStub.Object,
+                _ordersServiceStub.Object);
         }
 
         [Test]
         [Category("AddItem_Tests")]
         public void AddItemToPrice_GoodData_ReturnTrue()
         {
-            //Arrange
-            var stockServiceMock = new Mock<IStock>();
-            var emailServiceMock = new Mock<IEmail>();
-            var bankServiceMock = new Mock<IBank>();
-            var ordersServiceMock = new Mock<IOrders>();
-            var priceServiceStub = new Mock<IPrice>();
+            //Arrange           
+            _priceServiceStub.Setup(opt =>
+                opt.GetItemById(_item.Id)).Returns(new Item());
+            _priceServiceStub.Setup(opt =>
+                opt.AddItem(_item)).Returns(new Result() { Success = true });
 
-            priceServiceStub.Setup(opt =>
-                opt.GetItemById(It.IsAny<int>())).Returns(new Item());
-            priceServiceStub.Setup(opt =>
-                opt.AddItem(It.IsAny<Item>())).Returns(new Result() { Success = true });
+            var sut = getSut();
 
-            var sut = new Shop(stockServiceMock.Object, emailServiceMock.Object,
-                bankServiceMock.Object, priceServiceStub.Object, ordersServiceMock.Object);
-            var fakeItem = _item;
             //Act
-            var result = sut.AddItemToPrice(fakeItem);
+            var result = sut.AddItemToPrice(_item);
+
             //Assert
-            //Assert.That(result.Success, Is.EqualTo(true));  - variant
-            //Assert.IsTrue(result.Success); - variant
-            result.Success.Should().BeTrue();
+            StringAssert.AreEqualIgnoringCase(result.Success.ToString(), "True");
         }
         [Test]
         [Category("AddItem_Tests")]
         public void AddItemToPrice_BadData_ReturnFalse()
         {
-            //Arrange
-            var stockServiceMock = new Mock<IStock>();
-            var emailServiceMock = new Mock<IEmail>();
-            var bankServiceMock = new Mock<IBank>();
-            var ordersServiceMock = new Mock<IOrders>();
-            var priceServiceStub = new Mock<IPrice>();
+            //Arrange          
             int badId = -2;
-
-            priceServiceStub.Setup(opt =>
-                opt.GetItemById(It.IsAny<int>())).Returns(new Item());
-            priceServiceStub.Setup(opt =>
-                opt.AddItem(It.IsAny<Item>())).Returns(new Result() { Success = true });
-
-            var sut = new Shop(stockServiceMock.Object, emailServiceMock.Object,
-                bankServiceMock.Object, priceServiceStub.Object, ordersServiceMock.Object);
             var fakeItem = _item;
             _item.Id = badId;
+
+            _priceServiceStub.Setup(opt =>
+                opt.GetItemById(_item.Id)).Returns(new Item());
+            _priceServiceStub.Setup(opt =>
+                opt.AddItem(fakeItem)).Returns(new Result() { Success = true });
+
+            var sut = getSut();
+
             //Act
             var result = sut.AddItemToPrice(fakeItem);
+
             //Assert
-            //Assert.That(result.Success, Is.EqualTo(false));  - variant
-            //Assert.IsFalse(result.Success); - variant
             result.Success.Should().BeFalse();
         }
 
@@ -80,55 +82,41 @@ namespace SomeClass.Tests
         public void SetStockBalance_GoodData_ReturnTrue()
         {
             //Arrange
-            var stockServiceStub = new Mock<IStock>();
-            var emailServiceMock = new Mock<IEmail>();
-            var bankServiceMock = new Mock<IBank>();
-            var ordersServiceMock = new Mock<IOrders>();
-            var priceServiceStub = new Mock<IPrice>();
             int goodBalance = 10;
 
-            priceServiceStub.Setup(opt =>
-                opt.GetItemById(It.IsAny<int>())).Returns(new Item());
-            stockServiceStub.Setup(opt =>
-                opt.SetItemBalance(It.IsAny<Item>(), It.IsAny<int>())).Returns
+            _priceServiceStub.Setup(opt =>
+                opt.GetItemById(_item.Id)).Returns(new Item());
+            _stockServiceStub.Setup(opt =>
+                opt.SetItemBalance(_item, goodBalance)).Returns
                 (new Result() { Success = true });
 
-            var sut = new Shop(stockServiceStub.Object, emailServiceMock.Object,
-                bankServiceMock.Object, priceServiceStub.Object, ordersServiceMock.Object);
-            var fakeItem = _item;
+            var sut = getSut();
+
             //Act
-            var result = sut.SetStockBalance(fakeItem, goodBalance);
+            var result = sut.SetStockBalance(_item, goodBalance);
+
             //Assert
-            //Assert.That(result.Success, Is.EqualTo(true));  - variant
-            //Assert.IsTrue(result.Success); - variant
             result.Success.Should().BeTrue();
         }
         [Test]
         [Category("SetStock_Tests")]
         public void SetStockBalance_BadData_ReturnFalse()
         {
-            //Arrange
-            var stockServiceStub = new Mock<IStock>();
-            var emailServiceMock = new Mock<IEmail>();
-            var bankServiceMock = new Mock<IBank>();
-            var ordersServiceMock = new Mock<IOrders>();
-            var priceServiceStub = new Mock<IPrice>();
+            //Arrange           
             int badBalance = -2;
 
-            priceServiceStub.Setup(opt =>
-               opt.GetItemById(It.IsAny<int>())).Returns(new Item());
-            stockServiceStub.Setup(opt =>
-                opt.SetItemBalance(It.IsAny<Item>(), It.IsAny<int>())).Returns
+            _priceServiceStub.Setup(opt =>
+               opt.GetItemById(_item.Id)).Returns(new Item());
+            _stockServiceStub.Setup(opt =>
+                opt.SetItemBalance(_item, badBalance)).Returns
                 (new Result() { Success = true });
 
-            var sut = new Shop(stockServiceStub.Object, emailServiceMock.Object,
-                bankServiceMock.Object, priceServiceStub.Object, ordersServiceMock.Object);
-            var fakeItem = _item;
+            var sut = getSut();
+
             //Act
-            var result = sut.SetStockBalance(fakeItem, badBalance);
+            var result = sut.SetStockBalance(_item, badBalance);
+
             //Assert
-            //Assert.That(result.Success, Is.EqualTo(false));  - variant
-            //Assert.IsFalse(result.Success); - variant
             result.Success.Should().BeFalse();
         }
         [Test]
@@ -136,40 +124,33 @@ namespace SomeClass.Tests
         public void BuyItems_GoodData_ReturnTrue()
         {
             //Arrange
-            var stockServiceStub = new Mock<IStock>();
-            var emailServiceMock = new Mock<IEmail>();
-            var bankServiceStub = new Mock<IBank>();
-            var ordersServiceStub = new Mock<IOrders>();
-            var priceServiceStub = new Mock<IPrice>();
             int itemCount = 10;
             int stockItemCount = 10;
             int userMoney = 1000;
 
-            priceServiceStub.Setup(opt =>
-               opt.GetItemById(It.IsAny<int>())).Returns(new Item());
-
-            stockServiceStub.Setup(opt =>
-                opt.GetItemBalance(It.IsAny<Item>())).Returns
+            _priceServiceStub.Setup(opt =>
+               opt.GetItemById(_item.Id)).Returns(_item);
+            _stockServiceStub.Setup(opt =>
+                opt.GetItemBalance(_item)).Returns
                 (stockItemCount);
-            stockServiceStub.Setup(opt =>
-                opt.ShipOrder(It.IsAny<Order>())).Returns
+            _stockServiceStub.Setup(opt =>
+                opt.ShipOrder(_order)).Returns
                 (new Result() { Success = true });
-
-            ordersServiceStub.Setup(opt =>
-                opt.CreateOrder(_user, It.IsAny<Item>(), It.IsAny<int>()))
+            _ordersServiceStub.Setup(opt =>
+                opt.CreateOrder(_user, _item, itemCount))
                 .Returns(_order);
-
-            bankServiceStub.Setup(opt =>
+            _bankServiceStub.Setup(opt =>
                 opt.GetBalance(_user)).Returns
                 (userMoney);
-            bankServiceStub.Setup(opt =>
-                opt.DebitMoney(_user, It.IsAny<int>())).Returns
+            _bankServiceStub.Setup(opt =>
+                opt.DebitMoney(_user, _item.Price * itemCount)).Returns
                 (new Result() { Success = true });
 
-            var sut = new Shop(stockServiceStub.Object, emailServiceMock.Object,
-                bankServiceStub.Object, priceServiceStub.Object, ordersServiceStub.Object);
+            var sut = getSut();
+
             //Act
             var result = sut.BuyItems(_user, _item, itemCount);
+
             //Assert
             result.Success.Should().BeTrue();
         }
@@ -179,38 +160,30 @@ namespace SomeClass.Tests
            [Values(5, 4, 4, 5)] int stockItemCount,
            [Values(10, 10, 10, 5)] int userMoney)
         {
-            //Arrange
-            var stockServiceStub = new Mock<IStock>();
-            var emailServiceMock = new Mock<IEmail>();
-            var bankServiceStub = new Mock<IBank>();
-            var ordersServiceStub = new Mock<IOrders>();
-            var priceServiceStub = new Mock<IPrice>();
-
-            priceServiceStub.Setup(opt =>
-               opt.GetItemById(It.IsAny<int>())).Returns(new Item());
-
-            stockServiceStub.Setup(opt =>
-                opt.GetItemBalance(It.IsAny<Item>())).Returns
+            //Arrange 
+            _priceServiceStub.Setup(opt =>
+              opt.GetItemById(_item.Id)).Returns(_item);
+            _stockServiceStub.Setup(opt =>
+                opt.GetItemBalance(_item)).Returns
                 (stockItemCount);
-            stockServiceStub.Setup(opt =>
-                opt.ShipOrder(It.IsAny<Order>())).Returns
+            _stockServiceStub.Setup(opt =>
+                opt.ShipOrder(_order)).Returns
                 (new Result() { Success = true });
-
-            ordersServiceStub.Setup(opt =>
-                opt.CreateOrder(_user, It.IsAny<Item>(), It.IsAny<int>()))
+            _ordersServiceStub.Setup(opt =>
+                opt.CreateOrder(_user, _item, itemCount))
                 .Returns(_order);
-
-            bankServiceStub.Setup(opt =>
+            _bankServiceStub.Setup(opt =>
                 opt.GetBalance(_user)).Returns
                 (userMoney);
-            bankServiceStub.Setup(opt =>
-                opt.DebitMoney(_user, It.IsAny<int>())).Returns
+            _bankServiceStub.Setup(opt =>
+                opt.DebitMoney(_user, _item.Price * itemCount)).Returns
                 (new Result() { Success = true });
 
-            var sut = new Shop(stockServiceStub.Object, emailServiceMock.Object,
-                bankServiceStub.Object, priceServiceStub.Object, ordersServiceStub.Object);
+            var sut = getSut();
+
             //Act
             var result = sut.BuyItems(_user, _item, itemCount);
+
             //Assert       
             result.Success.Should().BeFalse();
         }
@@ -218,43 +191,36 @@ namespace SomeClass.Tests
         [Category("BuyItems_Tests")]
         public void BuyItems_GoodData_EmailSend()
         {
-            //Arrange
-            var stockServiceStub = new Mock<IStock>();
-            var emailServiceMock = new Mock<IEmail>();
-            var bankServiceStub = new Mock<IBank>();
-            var ordersServiceStub = new Mock<IOrders>();
-            var priceServiceStub = new Mock<IPrice>();
+            //Arrange        
             int itemCount = 10;
             int stockItemCount = 10;
             int userMoney = 1000;
 
-            priceServiceStub.Setup(opt =>
-               opt.GetItemById(It.IsAny<int>())).Returns(new Item());
-
-            stockServiceStub.Setup(opt =>
-                opt.GetItemBalance(It.IsAny<Item>())).Returns
+            _priceServiceStub.Setup(opt =>
+             opt.GetItemById(_item.Id)).Returns(_item);
+            _stockServiceStub.Setup(opt =>
+                opt.GetItemBalance(_item)).Returns
                 (stockItemCount);
-            stockServiceStub.Setup(opt =>
-                opt.ShipOrder(It.IsAny<Order>())).Returns
+            _stockServiceStub.Setup(opt =>
+                opt.ShipOrder(_order)).Returns
                 (new Result() { Success = true });
-
-            ordersServiceStub.Setup(opt =>
-                opt.CreateOrder(_user, It.IsAny<Item>(), It.IsAny<int>()))
+            _ordersServiceStub.Setup(opt =>
+                opt.CreateOrder(_user, _item, itemCount))
                 .Returns(_order);
-
-            bankServiceStub.Setup(opt =>
+            _bankServiceStub.Setup(opt =>
                 opt.GetBalance(_user)).Returns
                 (userMoney);
-            bankServiceStub.Setup(opt =>
-                opt.DebitMoney(_user, It.IsAny<int>())).Returns
+            _bankServiceStub.Setup(opt =>
+                opt.DebitMoney(_user, _item.Price * itemCount)).Returns
                 (new Result() { Success = true });
 
-            var sut = new Shop(stockServiceStub.Object, emailServiceMock.Object,
-                bankServiceStub.Object, priceServiceStub.Object, ordersServiceStub.Object);
+            var sut = getSut();
+
             //Act
             _ = sut.BuyItems(_user, _item, itemCount);
+
             //Assert
-            emailServiceMock.Verify(
+            _emailServiceMock.Verify(
              opt => opt.SendMessage(_user),
              Times.Once);
         }
